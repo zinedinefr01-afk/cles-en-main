@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clés en Main — Atelier de boutiques</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171C;
+    --surface:#1D2128;
+    --surface-raised:#242933;
+    --hairline:#343B47;
+    --text:#ECEDEF;
+    --text-dim:#8B93A1;
+    --accent:#C89B3C;
+    --accent-soft:#332B18;
+    --up:#7FAE8C;
+    --down:#C77B6A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:64px 24px 96px;
+  }
+  header{margin-bottom:56px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:44px;
+    line-height:1.08;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    color:var(--text-dim);
+    font-size:16px;
+    line-height:1.6;
+    max-width:520px;
+    margin:0;
+  }
+  .station{
+    background:var(--surface);
+    border:1px solid var(--hairline);
+    border-radius:14px;
+    padding:32px;
+    margin-bottom:28px;
+  }
+  .station h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:22px;
+    margin:0 0 4px;
+  }
+  .station .sub{
+    color:var(--text-dim);
+    font-size:14px;
+    margin:0 0 24px;
+  }
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    color:var(--text-dim);
+    margin-bottom:8px;
+    margin-top:18px;
+  }
+  label:first-of-type{margin-top:0;}
+  textarea, input, select{
+    width:100%;
+    background:var(--surface-raised);
+    border:1px solid var(--hairline);
+    color:var(--text);
+    border-radius:8px;
+    padding:12px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    resize:vertical;
+  }
+  textarea:focus, input:focus, select:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .row{display:flex; gap:14px;}
+  .row > div{flex:1;}
+  button{
+    margin-top:24px;
+    background:var(--accent);
+    color:#1A1500;
+    border:none;
+    font-weight:600;
+    font-size:15px;
+    padding:13px 22px;
+    border-radius:8px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  button:hover{opacity:0.9;}
+  button:active{transform:scale(0.98);}
+  button:disabled{opacity:0.5; cursor:wait;}
+  button:focus-visible{outline:2px solid var(--text); outline-offset:2px;}
+
+  .ticket{
+    margin-top:26px;
+    background:var(--surface-raised);
+    border:1px dashed var(--hairline);
+    border-radius:10px;
+    padding:26px;
+    transform:rotate(-0.3deg);
+    display:none;
+  }
+  .ticket.show{display:block;}
+  .ticket-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom:1px dashed var(--hairline);
+    padding-bottom:16px;
+    margin-bottom:16px;
+  }
+  .ticket-name{
+    font-family:'Fraunces',serif;
+    font-size:26px;
+    font-weight:600;
+  }
+  .ticket-tagline{color:var(--text-dim); font-size:14px; margin-top:4px;}
+  .stamp{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--accent);
+    border:1px solid var(--accent);
+    padding:5px 10px;
+    border-radius:100px;
+    white-space:nowrap;
+  }
+  .swatches{display:flex; gap:8px; margin:14px 0;}
+  .swatch{
+    width:36px; height:36px; border-radius:8px; border:1px solid var(--hairline);
+  }
+  .field-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-top:18px;
+    margin-bottom:6px;
+  }
+  .body-text{font-size:14px; line-height:1.6; color:var(--text);}
+  .product{
+    border-top:1px solid var(--hairline);
+    padding:12px 0;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .product-title{font-weight:500; font-size:14px;}
+  .product-desc{color:var(--text-dim); font-size:13px; margin-top:3px;}
+  .product-price{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    color:var(--accent);
+    white-space:nowrap;
+  }
+  .error{
+    margin-top:18px;
+    color:var(--down);
+    font-size:14px;
+    display:none;
+  }
+  .error.show{display:block;}
+  .loading{
+    margin-top:18px;
+    color:var(--text-dim);
+    font-size:14px;
+    font-family:'IBM Plex Mono',monospace;
+    display:none;
+  }
+  .loading.show{display:block;}
+
+  .trend-result{
+    margin-top:22px;
+    display:none;
+    align-items:center;
+    gap:16px;
+  }
+  .trend-result.show{display:flex;}
+  .trend-score{
+    font-family:'Fraunces',serif;
+    font-size:40px;
+    font-weight:600;
+    color:var(--accent);
+    line-height:1;
+  }
+  .trend-info .verdict{font-size:16px; font-weight:500;}
+  .trend-info .note{font-size:12px; color:var(--text-dim); margin-top:4px;}
+  .arrow-up{color:var(--up);}
+  .arrow-down{color:var(--down);}
+
+  footer{
+    margin-top:40px;
+    color:var(--text-dim);
+    font-size:12px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { transition:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Clés en Main · Atelier</div>
+    <h1>Décrivez la boutique.<br>L'IA prépare le reste.</h1>
+    <p>Renseignez le concept, l'atelier génère le nom, les couleurs, les textes et les fiches produit — prêts à envoyer vers la boutique.</p>
+  </header>
+
+  <div class="station">
+    <h2>Générateur de boutique</h2>
+    <p class="sub">Une phrase suffit. Plus la description est précise, plus le résultat colle au concept.</p>
+
+    <label for="desc">Description du business</label>
+    <textarea id="desc" rows="3" placeholder="Ex : Boutique de bijoux artisanaux faits main, style minimaliste">Boutique de bijoux artisanaux faits main, style minimaliste</textarea>
+
+    <div class="row">
+      <div>
+        <label for="audience">Client cible</label>
+        <input id="audience" type="text" placeholder="Ex : femmes 25-40 ans, sensibles au fait-main" value="Femmes 25-40 ans, sensibles au fait-main" />
+      </div>
+      <div>
+        <label for="priceRange">Gamme de prix</label>
+        <select id="priceRange">
+          <option value="low-cost">Low-cost</option>
+          <option value="milieu de gamme" selected>Milieu de gamme</option>
+          <option value="premium">Premium</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="brandTone">Ton de marque</label>
+        <select id="brandTone">
+          <option value="minimaliste" selected>Minimaliste</option>
+          <option value="fun et coloré">Fun et coloré</option>
+          <option value="sérieux et professionnel">Sérieux et professionnel</option>
+          <option value="luxe">Luxe</option>
+        </select>
+      </div>
+      <div>
+        <label for="shippingZone">Livraison</label>
+        <select id="shippingZone">
+          <option value="France uniquement" selected>France uniquement</option>
+          <option value="Europe">Europe</option>
+          <option value="Internationale">Internationale</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="nb">Nombre de produits à générer</label>
+    <select id="nb">
+      <option value="3">3 produits</option>
+      <option value="5" selected>5 produits</option>
+      <option value="8">8 produits</option>
+    </select>
+
+    <button id="genBtn" onclick="genererBoutique()">Générer la boutique</button>
+    <div class="loading" id="genLoading">// génération en cours — quelques secondes...</div>
+    <div class="error" id="genError"></div>
+
+    <div class="ticket" id="ticket">
+      <div class="ticket-head">
+        <div>
+          <div class="ticket-name" id="t-name"></div>
+          <div class="ticket-tagline" id="t-tagline"></div>
+        </div>
+        <div class="stamp" id="t-stamp">thème</div>
+      </div>
+
+      <div class="field-label">Thème Shopify recommandé</div>
+      <div class="body-text" id="t-theme"></div>
+
+      <div class="field-label">Palette</div>
+      <div class="swatches" id="t-swatches"></div>
+
+      <div class="field-label">À propos</div>
+      <div class="body-text" id="t-about"></div>
+
+      <div class="field-label">Produits générés</div>
+      <div id="t-products"></div>
+    </div>
+  </div>
+
+  <div class="station">
+    <h2>Radar de tendance</h2>
+    <p class="sub">Score d'intérêt Google Trends sur 3 mois — gratuit, indicatif, pas un volume de recherche exact.</p>
+
+    <div class="row">
+      <div>
+        <label for="keyword">Mot-clé produit</label>
+        <input id="keyword" type="text" placeholder="Ex : gourde inox" value="gourde inox" />
+      </div>
+      <div>
+        <label for="geo">Zone</label>
+        <select id="geo">
+          <option value="FR" selected>France</option>
+          <option value="US">États-Unis</option>
+          <option value="">Mondial</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="trendBtn" onclick="analyserTendance()">Analyser</button>
+    <div class="loading" id="trendLoading">// interrogation de Google Trends + recherche réelle...</div>
+    <div class="error" id="trendError"></div>
+
+    <div class="trend-result" id="trendResult">
+      <div class="trend-score" id="trend-score">—</div>
+      <div class="trend-info">
+        <div class="verdict" id="trend-verdict"></div>
+        <div class="note" id="trend-note"></div>
+      </div>
+    </div>
+
+    <div id="realDataBlock" style="display:none; margin-top:20px;">
+      <div class="field-label">Résultats Google réels</div>
+      <div class="body-text" id="real-total"></div>
+
+      <div class="field-label">Concurrents déjà en vente</div>
+      <div id="real-competitors"></div>
+
+      <div class="field-label">Actualités récentes</div>
+      <div id="real-news"></div>
+    </div>
+  </div>
+
+  <footer>cles-en-main.onrender.com — atelier interne, usage test</footer>
+</div>
+
+<script>
+async function genererBoutique(){
+  const btn = document.getElementById('genBtn');
+  const loading = document.getElementById('genLoading');
+  const error = document.getElementById('genError');
+  const ticket = document.getElementById('ticket');
+
+  error.classList.remove('show');
+  ticket.classList.remove('show');
+  loading.classList.add('show');
+  btn.disabled = true;
+
+  const businessDescription = document.getElementById('desc').value.trim();
+  const nbProducts = parseInt(document.getElementById('nb').value, 10);
+  const targetAudience = document.getElementById('audience').value.trim();
+  const priceRange = document.getElementById('priceRange').value;
+  const brandTone = document.getElementById('brandTone').value;
+  const shippingZone = document.getElementById('shippingZone').value;
+
+  try {
+    const res = await fetch('/api/generate-store', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ businessDescription, nbProducts, targetAudience, priceRange, brandTone, shippingZone })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+
+    document.getElementById('t-name').textContent = data.storeName || '—';
+    document.getElementById('t-tagline').textContent = data.tagline || '';
+    document.getElementById('t-theme').textContent = data.recommendedTheme
+      ? `${data.recommendedTheme} — ${data.themeReason || ''}`
+      : '—';
+    document.getElementById('t-about').textContent = (data.pages && data.pages.about) || '—';
+
+    const swatchWrap = document.getElementById('t-swatches');
+    swatchWrap.innerHTML = '';
+    if (data.colorPalette) {
+      Object.values(data.colorPalette).forEach(hex => {
+        const sw = document.createElement('div');
+        sw.className = 'swatch';
+        sw.style.background = hex;
+        sw.title = hex;
+        swatchWrap.appendChild(sw);
+      });
+    }
+
+    const productsWrap = document.getElementById('t-products');
+    productsWrap.innerHTML = '';
+    (data.products || []).forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'product';
+      row.innerHTML = `
+        <div>
+          <div class="product-title">${p.title}</div>
+          <div class="product-desc">${p.description || ''}</div>
+        </div>
+        <div class="product-price">${p.price ? p.price + ' €' : ''}</div>
+      `;
+      productsWrap.appendChild(row);
+    });
+
+    ticket.classList.add('show');
+  } catch (err) {
+    error.textContent = 'Échec de la génération : ' + err.message;
+    error.classList.add('show');
+  } finally {
+    loading.classList.remove('show');
+    btn.disabled = false;
+  }
+}
+
+async function analyserTendance(){
+  const btn = document.getElementById('trendBtn');
+  const loading = document.getElementById('trendLoading');
+  const error = document.getElementById('trendError');
+  const result = document.getElementById('trendResult');
+  const realBlock = document.getElementById('realDataBlock');
+
+  error.classList.remove('show');
+  result.classList.remove('show');
+  realBlock.style.display = 'none';
+  loading.classList.add('show');
+  btn.disabled = true;
+
+  const keyword = document.getElementById('keyword').value.trim();
+  const geo = document.getElementById('geo').value;
+
+  try {
+    const url = `/api/research?keyword=${encodeURIComponent(keyword)}&geo=${encodeURIComponent(geo)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+
+    const trend = data.trend || {};
+    document.getElementById('trend-score').textContent = trend.currentScore ?? '—';
+    document.getElementById('trend-verdict').textContent = trend.verdict || '';
+    document.getElementById('trend-note').textContent = trend.note || '';
+    result.classList.add('show');
+
+    const real = data.realData || {};
+    if (real.error) {
+      document.getElementById('real-total').textContent = real.hint || real.error;
+      document.getElementById('real-competitors').innerHTML = '';
+      document.getElementById('real-news').innerHTML = '';
+    } else {
+      document.getElementById('real-total').textContent = real.totalGoogleResults
+        ? `${real.totalGoogleResults.toLocaleString('fr-FR')} résultats sur Google`
+        : 'Non disponible';
+
+      const compWrap = document.getElementById('real-competitors');
+      compWrap.innerHTML = '';
+      (real.competitorListings || []).forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'product';
+        row.innerHTML = `
+          <div>
+            <div class="product-title">${c.title}</div>
+            <div class="product-desc">${c.source || ''}</div>
+          </div>
+          <div class="product-price">${c.price || ''}</div>
+        `;
+        compWrap.appendChild(row);
+      });
+      if ((real.competitorListings || []).length === 0) {
+        compWrap.innerHTML = '<div class="body-text">Aucun concurrent trouvé en vente directe.</div>';
+      }
+
+      const newsWrap = document.getElementById('real-news');
+      newsWrap.innerHTML = '';
+      (real.recentNews || []).forEach(n => {
+        const row = document.createElement('div');
+        row.className = 'product';
+        row.innerHTML = `
+          <div>
+            <div class="product-title">${n.title}</div>
+            <div class="product-desc">${n.source || ''} — ${n.date || ''}</div>
+          </div>
+        `;
+        newsWrap.appendChild(row);
+      });
+      if ((real.recentNews || []).length === 0) {
+        newsWrap.innerHTML = '<div class="body-text">Aucune actualité récente trouvée.</div>';
+      }
+    }
+    realBlock.style.display = 'block';
+
+  } catch (err) {
+    error.textContent = 'Échec de l\'analyse : ' + err.message;
+    error.classList.add('show');
+  } finally {
+    loading.classList.remove('show');
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
