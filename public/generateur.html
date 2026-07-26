@@ -244,6 +244,41 @@
     <label for="desc">Description du business</label>
     <textarea id="desc" rows="3" placeholder="Ex : Boutique de bijoux artisanaux faits main, style minimaliste">Boutique de bijoux artisanaux faits main, style minimaliste</textarea>
 
+    <div class="row">
+      <div>
+        <label for="audience">Client cible</label>
+        <input id="audience" type="text" placeholder="Ex : femmes 25-40 ans, sensibles au fait-main" value="Femmes 25-40 ans, sensibles au fait-main" />
+      </div>
+      <div>
+        <label for="priceRange">Gamme de prix</label>
+        <select id="priceRange">
+          <option value="low-cost">Low-cost</option>
+          <option value="milieu de gamme" selected>Milieu de gamme</option>
+          <option value="premium">Premium</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="brandTone">Ton de marque</label>
+        <select id="brandTone">
+          <option value="minimaliste" selected>Minimaliste</option>
+          <option value="fun et coloré">Fun et coloré</option>
+          <option value="sérieux et professionnel">Sérieux et professionnel</option>
+          <option value="luxe">Luxe</option>
+        </select>
+      </div>
+      <div>
+        <label for="shippingZone">Livraison</label>
+        <select id="shippingZone">
+          <option value="France uniquement" selected>France uniquement</option>
+          <option value="Europe">Europe</option>
+          <option value="Internationale">Internationale</option>
+        </select>
+      </div>
+    </div>
+
     <label for="nb">Nombre de produits à générer</label>
     <select id="nb">
       <option value="3">3 produits</option>
@@ -261,8 +296,11 @@
           <div class="ticket-name" id="t-name"></div>
           <div class="ticket-tagline" id="t-tagline"></div>
         </div>
-        <div class="stamp" id="t-stamp">brouillon</div>
+        <div class="stamp" id="t-stamp">thème</div>
       </div>
+
+      <div class="field-label">Thème Shopify recommandé</div>
+      <div class="body-text" id="t-theme"></div>
 
       <div class="field-label">Palette</div>
       <div class="swatches" id="t-swatches"></div>
@@ -324,18 +362,25 @@ async function genererBoutique(){
 
   const businessDescription = document.getElementById('desc').value.trim();
   const nbProducts = parseInt(document.getElementById('nb').value, 10);
+  const targetAudience = document.getElementById('audience').value.trim();
+  const priceRange = document.getElementById('priceRange').value;
+  const brandTone = document.getElementById('brandTone').value;
+  const shippingZone = document.getElementById('shippingZone').value;
 
   try {
     const res = await fetch('/api/generate-store', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ businessDescription, nbProducts })
+      body: JSON.stringify({ businessDescription, nbProducts, targetAudience, priceRange, brandTone, shippingZone })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
 
     document.getElementById('t-name').textContent = data.storeName || '—';
     document.getElementById('t-tagline').textContent = data.tagline || '';
+    document.getElementById('t-theme').textContent = data.recommendedTheme
+      ? `${data.recommendedTheme} — ${data.themeReason || ''}`
+      : '—';
     document.getElementById('t-about').textContent = (data.pages && data.pages.about) || '—';
 
     const swatchWrap = document.getElementById('t-swatches');
