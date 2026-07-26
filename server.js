@@ -1,9 +1,11 @@
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { generateStoreContent } from "./services/groq.js";
 import { testShopifyConnection, listProducts, createProduct } from "./services/shopify.js";
 import { analyzeTrend } from "./services/trends.js";
+import { realProductResearch } from "./services/serper.js";
 
 dotenv.config();
 
@@ -111,6 +113,37 @@ app.get("/api/trend", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Erreur lors de l'analyse de tendance.", details: err.message });
   }
+});
+
+/**
+ * GET /api/research?keyword=gourde+inox
+ * Recherche produit COMPLÈTE : Google Trends (estimation) + Serper (vraies données Google).
+ * Nécessite SERPER_API_KEY pour la partie "vraies données".
+ */
+app.get("/api/research", async (req, res) => {
+  const { keyword, geo } = req.query;
+
+  if (!keyword) {
+    return res.status(400).json({ error: "Le paramètre 'keyword' est requis." });
+  }
+
+  const result = { keyword };
+
+  // Partie 1 : tendance Google Trends (gratuit, estimation)
+  try {
+    result.trend = await analyzeTrend(keyword, geo || "FR");
+  } catch (err) {
+    result.trend = { error: err.message };
+  }
+
+  // Partie 2 : vraies données Google via Serper (nécessite clé API)
+  try {
+    result.realData = await realProductResearch(keyword);
+  } catch (err) {
+    result.realData = { error: err.message, hint: "Ajoute SERPER_API_KEY pour activer les vraies données." };
+  }
+
+  res.json(result);
 });
 
 const PORT = process.env.PORT || 3000;
