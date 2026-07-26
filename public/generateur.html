@@ -474,10 +474,16 @@ async function analyserTendance(){
       (real.competitorListings || []).forEach(c => {
         const row = document.createElement('div');
         row.className = 'product';
+        const shopifyBadge = c.isShopify === true
+          ? '<span style="color:#7FAE8C;">● Shopify détecté</span>'
+          : c.isShopify === false
+          ? '<span style="color:#8B93A1;">○ Autre plateforme</span>'
+          : '<span style="color:#8B93A1;">? Non vérifiable</span>';
         row.innerHTML = `
           <div>
             <div class="product-title">${c.title}</div>
-            <div class="product-desc">${c.source || ''}</div>
+            <div class="product-desc">${c.source || ''} — ${shopifyBadge}</div>
+            <div class="product-desc"><a href="${c.tiktokAdsLibraryUrl}" target="_blank" style="color:#C89B3C;">Voir pubs TikTok de cette marque →</a></div>
           </div>
           <div class="product-price">${c.price || ''}</div>
         `;
@@ -485,6 +491,12 @@ async function analyserTendance(){
       });
       if ((real.competitorListings || []).length === 0) {
         compWrap.innerHTML = '<div class="body-text">Aucun concurrent trouvé en vente directe.</div>';
+      } else if (real.shopifyCompetitorCount !== undefined) {
+        const summary = document.createElement('div');
+        summary.className = 'body-text';
+        summary.style.marginBottom = '10px';
+        summary.innerHTML = `<strong>${real.shopifyCompetitorCount}</strong> sur ${real.competitorCount} tournent sur Shopify. <a href="${real.generalTikTokAdsUrl}" target="_blank" style="color:#C89B3C;">Recherche TikTok Ads générale →</a>`;
+        compWrap.prepend(summary);
       }
 
       const newsWrap = document.getElementById('real-news');
