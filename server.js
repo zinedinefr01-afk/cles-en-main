@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); app.use(express.json());:
 
 // Petit check de santé (Render s'en sert pour vérifier que le service tourne)
 app.get("/", (req, res) => {
