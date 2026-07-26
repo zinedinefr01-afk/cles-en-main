@@ -1,6 +1,5 @@
 /**
  * Service de connexion à l'API Admin Shopify.
- * ⚠️ Pour l'instant, uniquement des fonctions de LECTURE (aucune modification possible).
  */
 
 const SHOPIFY_API_VERSION = "2025-01";
@@ -24,49 +23,53 @@ function getShopifyHeaders() {
   };
 }
 
-/**
- * Test simple : récupère les informations générales de la boutique.
- * Lecture seule, ne modifie rien.
- */
 export async function testShopifyConnection() {
   const url = `${getShopifyBaseUrl()}/shop.json`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: getShopifyHeaders(),
-  });
-
+  const response = await fetch(url, { method: "GET", headers: getShopifyHeaders() });
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Erreur Shopify (${response.status}) : ${errorText}`);
   }
-
   const data = await response.json();
   return {
     shopName: data.shop.name,
     domain: data.shop.domain,
     email: data.shop.email,
     currency: data.shop.currency,
-    productCount: undefined, // récupéré séparément si besoin
   };
 }
 
-/**
- * Liste les produits existants (lecture seule).
- */
 export async function listProducts(limit = 5) {
   const url = `${getShopifyBaseUrl()}/products.json?limit=${limit}`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: getShopifyHeaders(),
-  });
-
+  const response = await fetch(url, { method: "GET", headers: getShopifyHeaders() });
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Erreur Shopify (${response.status}) : ${errorText}`);
   }
-
   const data = await response.json();
   return data.products.map((p) => ({ id: p.id, title: p.title, status: p.status }));
+}
+
+export async function createProduct(product) {
+  const url = `${getShopifyBaseUrl()}/products.json`;
+  const body = {
+    product: {
+      title: product.title,
+      body_html: `<p>${product.description}</p>`,
+      status: "draft",
+      variants: [{ price: product.price?.toString() || "0.00" }],
+      product_type: product.collection || "Général",
+    },
+  };
+  const response = await fetch(url, {
+    method: "POST",
+    headers: getShopifyHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Erreur Shopify (${response.status}) : ${errorText}`);
+  }
+  const data = await response.json();
+  return { id: data.product.id, title: data.product.title, status: data.product.status };
 }
