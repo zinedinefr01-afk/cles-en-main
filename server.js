@@ -2,7 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { generateStoreContent } from "./services/groq.js";
-import { testShopifyConnection, listProducts } from "./services/shopify.js";
+import { testShopifyConnection, listProducts, createProduct } from "./services/shopify.js";
+import { analyzeTrend } from "./services/trends.js";
 
 dotenv.config();
 
@@ -65,8 +66,48 @@ app.get("/api/test-shopify/products", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/test-shopify/create-product
+ * ⚠️ ÉCRITURE : crée un vrai produit (en brouillon, non publié) dans la boutique.
+ * Body: { "title": "...", "description": "...", "price": 19.99, "collection": "..." }
+ */
+app.post("/api/test-shopify/create-product", async (req, res) => {
+  const { title, description, price, collection } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ error: "Le champ 'title' est requis." });
+  }
+
+  try {
+    const created = await createProduct({ title, description, price, collection });
+    res.json({ success: true, product: created });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/trend?keyword=gourde+inox&geo=FR
+ * Analyse la popularité d'un mot-clé via Google Trends (gratuit).
+ */
+app.get("/api/trend", async (req, res) => {
+  const { keyword, geo } = req.query;
+
+  if (!keyword) {
+    return res.status(400).json({ error: "Le paramètre 'keyword' est requis." });
+  }
+
+  try {
+    const result = await analyzeTrend(keyword, geo || "FR");
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de l'analyse de tendance.", details: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Serveur lancé sur le port ${PORT}`);
 });
-
