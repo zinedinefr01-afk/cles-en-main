@@ -12,7 +12,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-
 // Petit check de santé (Render s'en sert pour vérifier que le service tourne)
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "shopify-ai-saas" });
@@ -20,10 +19,10 @@ app.get("/", (req, res) => {
 
 /**
  * POST /api/generate-store
- * Body: { "businessDescription": "...", "nbProducts": 5 }
+ * Body: { "businessDescription": "...", "nbProducts": 5, "targetAudience": "...", "priceRange": "...", "brandTone": "...", "shippingZone": "..." }
  */
 app.post("/api/generate-store", async (req, res) => {
-  const { businessDescription, nbProducts } = req.body;
+  const { businessDescription, nbProducts, targetAudience, priceRange, brandTone, shippingZone } = req.body;
 
   if (!businessDescription || businessDescription.trim().length < 5) {
     return res.status(400).json({
@@ -32,7 +31,12 @@ app.post("/api/generate-store", async (req, res) => {
   }
 
   try {
-    const storeContent = await generateStoreContent(businessDescription, nbProducts || 5);
+    const storeContent = await generateStoreContent(businessDescription, nbProducts || 5, {
+      targetAudience,
+      priceRange,
+      brandTone,
+      shippingZone,
+    });
     res.json(storeContent);
   } catch (err) {
     console.error(err);
