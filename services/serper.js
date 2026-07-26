@@ -64,17 +64,34 @@ async function detectShopify(url) {
 }
 
 /**
- * Construit un lien direct vers la bibliothèque publicitaire TikTok (Europe uniquement),
- * pré-rempli avec le nom de marque ou le mot-clé.
+ * Construit un lien direct vers la bibliothèque publicitaire TikTok (Europe uniquement).
+ * mode "keyword" = recherche par mot-clé produit (query_type=2)
+ * mode "advertiser" = recherche par nom de marque (query_type=1)
  */
-function buildTikTokAdsLibraryUrl(query) {
-  const params = new URLSearchParams({ region: "all", adv_name: query, query_type: "1" });
+function buildTikTokAdsLibraryUrl(query, mode = "keyword") {
+  const queryType = mode === "advertiser" ? "1" : "2";
+  const params = new URLSearchParams({ region: "all", adv_name: query, query_type: queryType });
   return `https://library.tiktok.com/ads?${params.toString()}`;
 }
 
 /**
+ * Construit un lien direct vers la Meta Ads Library (Facebook + Instagram), par mot-clé.
+ * Gratuit, sans compte requis, recherche mondiale.
+ */
+function buildMetaAdsLibraryUrl(query) {
+  const params = new URLSearchParams({
+    active_status: "active",
+    ad_type: "all",
+    country: "ALL",
+    q: query,
+    search_type: "keyword_unordered",
+  });
+  return `https://www.facebook.com/ads/library/?${params.toString()}`;
+}
+
+/**
  * Fait une vraie recherche produit : résultats Google + Shopping + Actualités,
- * enrichie avec détection Shopify + lien TikTok Ads par concurrent.
+ * enrichie avec détection Shopify (Shopping ET résultats organiques) + lien TikTok Ads.
  */
 export async function realProductResearch(keyword) {
   const [searchData, shoppingData, newsData] = await Promise.all([
@@ -88,28 +105,52 @@ export async function realProductResearch(keyword) {
     : null;
 
   const rawShopping = (shoppingData.shopping || []).slice(0, 6);
+  const rawOrganic = (searchData.organic || []).slice(0, 6);
 
-  // Pour chaque concurrent, on vérifie en parallèle si c'est du Shopify
-  const shoppingListings = await Promise.all(
-    rawShopping.map(async (item) => {
-      const { isShopify, brandName } = item.link
-        ? await detectShopify(item.link)
-        : { isShopify: null, brandName: null };
+  // On vérifie Shopify sur les deux sources en parallèle : Shopping (gros comparateurs)
+  // ET résultats organiques (souvent là où se cachent les petites boutiques dropshipping)
+  const [shoppingListings, organicListings] = await Promise.all([
+    Promise.all(
+      rawShopping.map(async (item) => {
+        const { isShopify, brandName } = item.link
+          ? await detectShopify(item.link)
+          : { isShopify: null, brandName: null };
+        return {
+          title: item.title,
+          source: item.source,
+          price: item.price,
+          link: item.link,
+          isShopify,
+          brandName,
+          origin: "shopping",
+        };
+      })
+    ),
+    Promise.all(
+      rawOrganic.map(async (item) => {
+        const { isShopify, brandName } = item.link
+          ? await detectShopify(item.link)
+          : { isShopify: null, brandName: null };
+        return {
+          title: item.title,
+          source: new URL(item.link).hostname,
+          price: null,
+          link: item.link,
+          isShopify,
+          brandName,
+          origin: "organique",
+        };
+      })
+    ),
+  ]);
 
-      const tiktokQuery = brandName || item.source || keyword;
+  const allListings = [...shoppingListings, ...organicListings].map((item) => ({
+    ...item,
+    tiktokAdsLibraryUrl: buildTikTokAdsLibraryUrl(item.brandName || item.source || keyword, "advertiser"),
+    metaAdsLibraryUrl: buildMetaAdsLibraryUrl(item.brandName || item.source || keyword),
+  }));
 
-      return {
-        title: item.title,
-        source: item.source,
-        price: item.price,
-        link: item.link,
-        isShopify,
-        tiktokAdsLibraryUrl: buildTikTokAdsLibraryUrl(tiktokQuery),
-      };
-    })
-  );
-
-  const shopifyCompetitors = shoppingListings.filter((s) => s.isShopify === true);
+  const shopifyCompetitors = allListings.filter((s) => s.isShopify === true);
 
   const recentNews = (newsData.news || []).slice(0, 5).map((item) => ({
     title: item.title,
@@ -120,12 +161,15 @@ export async function realProductResearch(keyword) {
   return {
     keyword,
     totalGoogleResults: totalResults,
-    competitorCount: shoppingListings.length,
+    competitorCount: allListings.length,
     shopifyCompetitorCount: shopifyCompetitors.length,
-    competitorListings: shoppingListings,
+    competitorListings: allListings,
     recentNewsCount: recentNews.length,
     recentNews,
-    generalTikTokAdsUrl: buildTikTokAdsLibraryUrl(keyword),
-    note: "Données réelles issues de Google via Serper.dev. Détection Shopify basée sur le code source des sites. Bibliothèque TikTok Ads limitée à l'Europe pour l'instant.",
+    // Recherche directe par mot-clé produit — bien plus utile que par marque
+    // pour repérer les boutiques dropshipping qui vivent surtout de pub TikTok
+    keywordTikTokAdsUrl: buildTikTokAdsLibraryUrl(keyword, "keyword"),
+    keywordMetaAdsUrl: buildMetaAdsLibraryUrl(keyword),
+    note: "Détection Shopify sur résultats Shopping + organiques. Les petites boutiques dropshipping n'apparaissent pas toujours sur Google (elles vivent de pub, pas de SEO) — les recherches TikTok/Meta par mot-clé sont souvent plus fiables pour les repérer. Bibliothèque TikTok Ads limitée à l'Europe ; Meta Ads Library couvre plus largement.",
   };
 }
