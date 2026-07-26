@@ -8,10 +8,11 @@
     "start": "node server.js",
     "dev": "node --watch server.js"
   },
-  "dependencies": "google-trends-api": "4.9.2" {
+  "dependencies": {
     "express": "^4.19.2",
     "groq-sdk": "^0.7.0",
     "dotenv": "^16.4.5",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "google-trends-api": "^4.9.2"
   }
 }
