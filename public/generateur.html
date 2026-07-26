@@ -483,7 +483,11 @@ async function analyserTendance(){
           <div>
             <div class="product-title">${c.title}</div>
             <div class="product-desc">${c.source || ''} — ${shopifyBadge}</div>
-            <div class="product-desc"><a href="${c.tiktokAdsLibraryUrl}" target="_blank" style="color:#C89B3C;">Voir pubs TikTok de cette marque →</a></div>
+            <div class="product-desc">
+              <a href="${c.tiktokAdsLibraryUrl}" target="_blank" style="color:#C89B3C;">TikTok Ads →</a>
+              &nbsp;·&nbsp;
+              <a href="${c.metaAdsLibraryUrl}" target="_blank" style="color:#C89B3C;">Meta Ads →</a>
+            </div>
           </div>
           <div class="product-price">${c.price || ''}</div>
         `;
@@ -495,7 +499,7 @@ async function analyserTendance(){
         const summary = document.createElement('div');
         summary.className = 'body-text';
         summary.style.marginBottom = '10px';
-        summary.innerHTML = `<strong>${real.shopifyCompetitorCount}</strong> sur ${real.competitorCount} tournent sur Shopify. <a href="${real.generalTikTokAdsUrl}" target="_blank" style="color:#C89B3C;">Recherche TikTok Ads générale →</a>`;
+        summary.innerHTML = `<strong>${real.shopifyCompetitorCount}</strong> sur ${real.competitorCount} tournent sur Shopify (Google sous-représente souvent les boutiques dropshipping, qui vivent de pub plutôt que de SEO). <br><a href="${real.keywordTikTokAdsUrl}" target="_blank" style="color:#C89B3C; font-weight:600;">→ "${keyword}" dans les pubs TikTok</a> &nbsp;·&nbsp; <a href="${real.keywordMetaAdsUrl}" target="_blank" style="color:#C89B3C; font-weight:600;">→ dans les pubs Meta (FB/Insta)</a>`;
         compWrap.prepend(summary);
       }
 
