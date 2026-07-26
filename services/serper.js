@@ -36,8 +36,45 @@ async function callSerper(query, type = "search") {
 }
 
 /**
- * Fait une vraie recherche produit : résultats Google + Shopping + Actualités.
- * Retourne des chiffres réels (pas une estimation), tirés de Google en direct.
+ * Vérifie si une URL correspond à une vraie boutique Shopify,
+ * en inspectant le code source de la page (technique légale, gratuite).
+ */
+async function detectShopify(url) {
+  try {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(6000),
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; StoreResearchBot/1.0)" },
+    });
+    const html = await response.text();
+
+    const isShopify =
+      html.includes("cdn.shopify.com") ||
+      html.includes("Shopify.theme") ||
+      html.includes("shopify-features") ||
+      html.includes("myshopify.com");
+
+    // Tente d'extraire le nom de la marque (utile pour la recherche TikTok Ads)
+    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    const brandName = titleMatch ? titleMatch[1].split(/[-|–]/)[0].trim() : null;
+
+    return { isShopify, brandName };
+  } catch {
+    return { isShopify: null, brandName: null };
+  }
+}
+
+/**
+ * Construit un lien direct vers la bibliothèque publicitaire TikTok (Europe uniquement),
+ * pré-rempli avec le nom de marque ou le mot-clé.
+ */
+function buildTikTokAdsLibraryUrl(query) {
+  const params = new URLSearchParams({ region: "all", adv_name: query, query_type: "1" });
+  return `https://library.tiktok.com/ads?${params.toString()}`;
+}
+
+/**
+ * Fait une vraie recherche produit : résultats Google + Shopping + Actualités,
+ * enrichie avec détection Shopify + lien TikTok Ads par concurrent.
  */
 export async function realProductResearch(keyword) {
   const [searchData, shoppingData, newsData] = await Promise.all([
@@ -50,11 +87,29 @@ export async function realProductResearch(keyword) {
     ? parseInt(searchData.searchInformation.totalResults, 10)
     : null;
 
-  const shoppingListings = (shoppingData.shopping || []).slice(0, 5).map((item) => ({
-    title: item.title,
-    source: item.source,
-    price: item.price,
-  }));
+  const rawShopping = (shoppingData.shopping || []).slice(0, 6);
+
+  // Pour chaque concurrent, on vérifie en parallèle si c'est du Shopify
+  const shoppingListings = await Promise.all(
+    rawShopping.map(async (item) => {
+      const { isShopify, brandName } = item.link
+        ? await detectShopify(item.link)
+        : { isShopify: null, brandName: null };
+
+      const tiktokQuery = brandName || item.source || keyword;
+
+      return {
+        title: item.title,
+        source: item.source,
+        price: item.price,
+        link: item.link,
+        isShopify,
+        tiktokAdsLibraryUrl: buildTikTokAdsLibraryUrl(tiktokQuery),
+      };
+    })
+  );
+
+  const shopifyCompetitors = shoppingListings.filter((s) => s.isShopify === true);
 
   const recentNews = (newsData.news || []).slice(0, 5).map((item) => ({
     title: item.title,
@@ -66,9 +121,11 @@ export async function realProductResearch(keyword) {
     keyword,
     totalGoogleResults: totalResults,
     competitorCount: shoppingListings.length,
+    shopifyCompetitorCount: shopifyCompetitors.length,
     competitorListings: shoppingListings,
     recentNewsCount: recentNews.length,
     recentNews,
-    note: "Données réelles issues de Google via Serper.dev — pas une estimation.",
+    generalTikTokAdsUrl: buildTikTokAdsLibraryUrl(keyword),
+    note: "Données réelles issues de Google via Serper.dev. Détection Shopify basée sur le code source des sites. Bibliothèque TikTok Ads limitée à l'Europe pour l'instant.",
   };
 }
